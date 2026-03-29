@@ -55,7 +55,7 @@ docker compose up --build
 
 ## Build Log
 🔨 Building in public — Day 1/30
-Follow progress: [LinkedIn Profile URL]
+Follow progress: [https://www.linkedin.com/in/safi-ahmed-shariff-b03499264]
 
 ## Author
 Safi | DevOps & Cloud Engineer
