@@ -1,0 +1,49 @@
+version: "3.9"
+
+networks:
+  votechain-net:
+    driver: bridge
+
+services:
+  biometric-service:
+    build: ./services/biometric
+    container_name: votechain-biometric
+    ports:
+      - "8001:8001"
+    networks:
+      - votechain-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  auth-service:
+    build: ./services/auth
+    container_name: votechain-auth
+    ports:
+      - "8002:8002"
+    networks:
+      - votechain-net
+    depends_on:
+      - biometric-service
+
+  vote-service:
+    build: ./services/vote
+    container_name: votechain-vote
+    ports:
+      - "8003:8003"
+    networks:
+      - votechain-net
+    depends_on:
+      - auth-service
+
+  anomaly-detector:
+    build: ./services/anomaly-detector
+    container_name: votechain-anomaly
+    ports:
+      - "8005:8005"
+    networks:
+      - votechain-net
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
