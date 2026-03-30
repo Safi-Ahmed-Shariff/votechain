@@ -1,10 +1,9 @@
-version: "3.9"
-
 networks:
   votechain-net:
     driver: bridge
 
 services:
+
   biometric-service:
     build: ./services/biometric
     container_name: votechain-biometric
@@ -12,11 +11,14 @@ services:
       - "8001:8001"
     networks:
       - votechain-net
+    environment:
+      - BIOMETRIC_PEPPER=votechain-dev-pepper-changeme
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
+    restart: unless-stopped
 
   auth-service:
     build: ./services/auth
@@ -25,8 +27,17 @@ services:
       - "8002:8002"
     networks:
       - votechain-net
+    environment:
+      - TOKEN_SECRET=votechain-dev-secret-changeme
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     depends_on:
-      - biometric-service
+      biometric-service:
+        condition: service_healthy
+    restart: unless-stopped
 
   vote-service:
     build: ./services/vote
@@ -35,15 +46,16 @@ services:
       - "8003:8003"
     networks:
       - votechain-net
-    depends_on:
-      - auth-service
-
-  anomaly-detector:
-    build: ./services/anomaly-detector
-    container_name: votechain-anomaly
-    ports:
-      - "8005:8005"
-    networks:
-      - votechain-net
     environment:
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - AUTH_SERVICE_URL=http://auth-service:8002
+      - VOTE_SECRET=votechain-dev-vote-secret
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      auth-service:
+        condition: service_healthy
+    restart: unless-stopped
+
