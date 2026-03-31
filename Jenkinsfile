@@ -53,17 +53,17 @@ pipeline {
             parallel {
                 stage('Scan Biometric') {
                     steps {
-                        sh 'docker run --rm aquasec/trivy:latest image --exit-code 0 --severity HIGH,CRITICAL ${BIOMETRIC_IMAGE}:${IMAGE_TAG}'
+                        sh 'docker run --rm aquasecurity/trivy:0.50.1 image --exit-code 0 --severity HIGH,CRITICAL ${BIOMETRIC_IMAGE}:${IMAGE_TAG}'
                     }
                 }
                 stage('Scan Auth') {
                     steps {
-                        sh 'docker run --rm aquasec/trivy:latest image --exit-code 0 --severity HIGH,CRITICAL ${AUTH_IMAGE}:${IMAGE_TAG}'
+                        sh 'docker run --rm aquasecurity/trivy:0.50.1 --exit-code 0 --severity HIGH,CRITICAL ${AUTH_IMAGE}:${IMAGE_TAG}'
                     }
                 }
                 stage('Scan Vote') {
                     steps {
-                        sh 'docker run --rm aquasec/trivy:latest image --exit-code 0 --severity HIGH,CRITICAL ${VOTE_IMAGE}:${IMAGE_TAG}'
+                        sh 'docker run --rm aquasecurity/trivy:0.50.1 --exit-code 0 --severity HIGH,CRITICAL ${VOTE_IMAGE}:${IMAGE_TAG}'
                     }
                 }
             }
