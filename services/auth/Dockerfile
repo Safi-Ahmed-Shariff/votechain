@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine AS builder
+FROM golang:1.24-alpine3.21 AS builder
 
 WORKDIR /build
 
@@ -8,7 +8,7 @@ COPY main.go .
 RUN go mod tidy && \
     CGO_ENABLED=0 GOOS=linux go build -o auth-service .
 
-FROM alpine:3.19
+FROM alpine:3.21
 
 RUN apk --no-cache add curl
 

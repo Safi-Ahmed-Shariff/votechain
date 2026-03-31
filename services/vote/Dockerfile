@@ -1,4 +1,4 @@
-FROM node:20-alpine AS builder
+FROM node:22-alpine3.21 AS builder
 
 WORKDIR /build
 
@@ -6,7 +6,7 @@ COPY package.json .
 
 RUN npm install --production
 
-FROM node:20-alpine
+FROM node:22-alpine3.21
 
 RUN apk --no-cache add curl
 
