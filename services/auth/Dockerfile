@@ -10,7 +10,7 @@ RUN go mod tidy && \
 
 FROM alpine:3.21
 
-RUN apk --no-cache add curl
+RUN apk update && apk --no-cache add curl
 
 WORKDIR /app
 
