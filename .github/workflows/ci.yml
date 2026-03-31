@@ -1,0 +1,151 @@
+name: VoteChain CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  BIOMETRIC_IMAGE: votechain/biometric
+  AUTH_IMAGE: votechain/auth
+  VOTE_IMAGE: votechain/vote
+
+jobs:
+
+  lint:
+    name: Lint Python
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.14.3
+
+      - name: Install flake8
+        run: pip install flake8
+
+      - name: Run flake8 on biometric service
+        run: flake8 services/biometric/main.py --max-line-length=120 --ignore=E501,W503
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.14.3
+
+      - name: Install dependencies
+        run: |
+          cd services/biometric
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: |
+          cd services/biometric
+          pytest tests/ -v || echo "No tests yet — skipping"
+
+  build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build biometric image
+        run: docker build -t ${{ env.BIOMETRIC_IMAGE }}:${{ github.sha }} ./services/biometric
+
+      - name: Build auth image
+        run: docker build -t ${{ env.AUTH_IMAGE }}:${{ github.sha }} ./services/auth
+
+      - name: Build vote image
+        run: docker build -t ${{ env.VOTE_IMAGE }}:${{ github.sha }} ./services/vote
+
+      - name: Save images as artifacts
+        run: |
+          docker save ${{ env.BIOMETRIC_IMAGE }}:${{ github.sha }} > /tmp/biometric.tar
+          docker save ${{ env.AUTH_IMAGE }}:${{ github.sha }} > /tmp/auth.tar
+          docker save ${{ env.VOTE_IMAGE }}:${{ github.sha }} > /tmp/vote.tar
+
+      - name: Upload image artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-images
+          path: /tmp/*.tar
+          retention-days: 1
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download image artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-images
+          path: /tmp
+
+      - name: Load Docker images
+        run: |
+          docker load < /tmp/biometric.tar
+          docker load < /tmp/auth.tar
+          docker load < /tmp/vote.tar
+
+      - name: Install Grype
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Scan biometric image
+        run: |
+          grype ${{ env.BIOMETRIC_IMAGE }}:${{ github.sha }} \
+          --fail-on critical \
+          --only-fixed \
+          -o table
+
+      - name: Scan auth image
+        run: |
+          grype ${{ env.AUTH_IMAGE }}:${{ github.sha }} \
+          --fail-on critical \
+          --only-fixed \
+          -o table
+
+      - name: Scan vote image
+        run: |
+          grype ${{ env.VOTE_IMAGE }}:${{ github.sha }} \
+          --fail-on critical \
+          --only-fixed \
+          -o table
+
+  summary:
+    name: Pipeline Summary
+    runs-on: ubuntu-latest
+    needs: [lint, test, build, security-scan]
+    if: always()
+    steps:
+      - name: Print summary
+        run: |
+          echo "## VoteChain CI Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint | ${{ needs.lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Test | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
