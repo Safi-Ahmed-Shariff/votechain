@@ -55,26 +55,25 @@ pipeline {
             }
         }
 
-        stage('Parallel Scans') {
-            parallel {
-                stage('Scan Biometric') {
-                    steps {
-                        sh 'docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/grype:latest ${BIOMETRIC_IMAGE}:${IMAGE_TAG} -f high'
-                    }
-                }
-                stage('Scan Auth') {
-                    steps {
-                        sh 'docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/grype:latest ${AUTH_IMAGE}:${IMAGE_TAG} -f high'
-                    }
-                }
-                stage('Scan Vote') {
-                    steps {
-                        sh 'docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/grype:latest ${VOTE_IMAGE}:${IMAGE_TAG} -f high'
-                    }
-                }
-            }
-        } 
-
+	stage('Security Scan') {
+		parallel {
+		stage('Scan Biometric') {
+			steps {
+			sh 'GRYPE_DB_CACHE_DIR=/tmp/grype-db grype votechain/biometric:${IMAGE_TAG} --fail-on critical -o table'
+				}
+			}
+		stage('Scan Auth') {
+			steps {
+			sh 'GRYPE_DB_CACHE_DIR=/tmp/grype-db grype votechain/auth:${IMAGE_TAG} --fail-on critical -o table'
+				}
+			}
+		stage('Scan Vote') {
+			steps {
+			sh 'GRYPE_DB_CACHE_DIR=/tmp/grype-db grype votechain/vote:${IMAGE_TAG} --fail-on critical -o table'
+				}
+			}
+		}	
+	}
 	stage('Health Check') {
 		steps {
 			sh '''
