@@ -83,6 +83,7 @@ pipeline {
 			docker inspect --format="{{.State.Health.Status}}" votechain-auth | grep healthy
 			docker inspect --format="{{.State.Health.Status}}" votechain-vote | grep healthy
 			'''
+			}
 		}
 	}
 	post {
