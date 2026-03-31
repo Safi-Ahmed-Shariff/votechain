@@ -49,21 +49,21 @@ pipeline {
             }
         }
 
-        stage('Security Scan') {
+	stage('Security Scan') {
             parallel {
                 stage('Scan Biometric') {
                     steps {
-                        sh 'docker run --rm aquasec/trivy:latest image --exit-code 0 --severity HIGH,CRITICAL ${BIOMETRIC_IMAGE}:${IMAGE_TAG}'
+                        sh 'docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/grype:latest ${BIOMETRIC_IMAGE}:${IMAGE_TAG} -f high'
                     }
                 }
                 stage('Scan Auth') {
                     steps {
-                        sh 'docker run --rm aquasec/trivy:latest --exit-code 0 --severity HIGH,CRITICAL ${AUTH_IMAGE}:${IMAGE_TAG}'
+                        sh 'docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/grype:latest ${AUTH_IMAGE}:${IMAGE_TAG} -f high'
                     }
                 }
                 stage('Scan Vote') {
                     steps {
-                        sh 'docker run --rm aquasec/trivy:latest --exit-code 0 --severity HIGH,CRITICAL ${VOTE_IMAGE}:${IMAGE_TAG}'
+                        sh 'docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/grype:latest ${VOTE_IMAGE}:${IMAGE_TAG} -f high'
                     }
                 }
             }
