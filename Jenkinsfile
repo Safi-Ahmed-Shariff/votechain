@@ -48,8 +48,14 @@ pipeline {
                 }
             }
         }
+	stage('Security Scan Preparation') {
+            steps {
+                echo 'Pre-pulling Grype scanner...'
+                sh 'docker pull anchore/grype:latest'
+            }
+        }
 
-	stage('Security Scan') {
+        stage('Parallel Scans') {
             parallel {
                 stage('Scan Biometric') {
                     steps {
@@ -67,7 +73,7 @@ pipeline {
                     }
                 }
             }
-        }
+        } 
 
 	stage('Health Check') {
 		steps {
