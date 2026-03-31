@@ -52,21 +52,37 @@ pipeline {
 		parallel {
 		stage('Scan Biometric') {
 			steps {
-			sh 'GRYPE_DB_CACHE_DIR=/tmp/grype-db grype votechain/biometric:${IMAGE_TAG} --fail-on critical -o table'
-				}
+				sh '''
+				GRYPE_DB_CACHE_DIR=/tmp/grype-db grype votechain/biometric:${IMAGE_TAG} \
+				--fail-on critical \
+				--only-fixed \
+				-o table
+				'''
 			}
+		}
 		stage('Scan Auth') {
 			steps {
-			sh 'GRYPE_DB_CACHE_DIR=/tmp/grype-db grype votechain/auth:${IMAGE_TAG} --fail-on critical -o table'
-				}
+				sh '''
+				GRYPE_DB_CACHE_DIR=/tmp/grype-db grype votechain/auth:${IMAGE_TAG} \
+				--fail-on critical \
+				--only-fixed \
+				-o table
+				'''
 			}
+		}
 		stage('Scan Vote') {
 			steps {
-			sh 'GRYPE_DB_CACHE_DIR=/tmp/grype-db grype votechain/vote:${IMAGE_TAG} --fail-on critical -o table'
+				sh '''
+				GRYPE_DB_CACHE_DIR=/tmp/grype-db grype votechain/vote:${IMAGE_TAG} \
+				--fail-on critical \
+				--only-fixed \
+				-o table
+				'''
 				}
 			}
-		}	
+		}
 	}
+
 	stage('Health Check') {
 		steps {
 			sh '''

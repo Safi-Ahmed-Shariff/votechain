@@ -1,4 +1,4 @@
-FROM python:3.13-slim-bookworm
+FROM python:3.13-alpine3.22
 
 LABEL maintainer="VoteChain Team" \
       service="biometric-service" \
