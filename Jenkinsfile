@@ -85,17 +85,17 @@ pipeline {
 			'''
 		}
 	}
-    post {
-        success {
-            echo "Pipeline passed. All services built, scanned and healthy."
-        }
-        failure {
-            echo "Pipeline failed. Check logs above for details."
-            sh 'docker compose down || true'
-        }
-        always {
-            sh 'docker image prune -f || true'
-        }
-    }
-}
+	post {
+		success {
+			echo "Pipeline passed. All services built, scanned and healthy."
+			}
+		failure {
+			echo "Pipeline failed. Check logs above for details."
+			sh 'docker compose down || true'
+			}
+		always {
+			sh 'docker image prune -f || true'
+			}
+		}
+	}
 }
