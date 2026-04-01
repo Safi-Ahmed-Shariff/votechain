@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: votechain-config
+  namespace: votechain
+data:
+  AUTH_SERVICE_URL: "http://auth-service:8002"
+  BIOMETRIC_SERVICE_URL: "http://biometric-service:8001"
+  VOTE_SERVICE_URL: "http://vote-service:8003"
+  LOG_LEVEL: "INFO"

@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: biometric-deployment
+  namespace: votechain
+  labels:
+    app: biometric
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: biometric
+  template:
+    metadata:
+      labels:
+        app: biometric
+        tier: backend
+    spec:
+      containers:
+        - name: biometric
+          image: votechain/biometric:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8001
+          env:
+            - name: BIOMETRIC_PEPPER
+              valueFrom:
+                secretKeyRef:
+                  name: votechain-secrets
+                  key: BIOMETRIC_PEPPER
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 5
+            periodSeconds: 10

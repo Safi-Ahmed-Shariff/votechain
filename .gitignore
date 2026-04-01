@@ -30,3 +30,8 @@ vault-token
 # OS
 .DS_Store
 Thumbs.db
+
+# Binaries
+kubectl
+minikube-linux-amd64
+*.exe

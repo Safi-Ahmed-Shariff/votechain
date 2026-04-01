@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: votechain
+  labels:
+    app: votechain
+    environment: development

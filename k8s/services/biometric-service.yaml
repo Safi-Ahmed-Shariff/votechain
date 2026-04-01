@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: biometric-service
+  namespace: votechain
+  labels:
+    app: biometric
+spec:
+  selector:
+    app: biometric
+  ports:
+    - protocol: TCP
+      port: 8001
+      targetPort: 8001
+  type: ClusterIP
