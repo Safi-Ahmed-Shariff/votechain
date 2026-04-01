@@ -34,7 +34,7 @@ Voter → Biometric Gate → ZK Proof Engine → Encrypted Vote → Blockchain
 ## DevOps Stack
 Docker · Kubernetes (Minikube/EKS) · Terraform · Jenkins ·
 GitHub Actions · Prometheus · Grafana · ELK Stack ·
-HashiCorp Vault · Falco · Trivy · OWASP ZAP
+HashiCorp Vault · Falco · Grype · OWASP ZAP
 
 ## Security Layers
 1. 🔍 Dual biometric gate (fingerprint + iris, liveness detection)
