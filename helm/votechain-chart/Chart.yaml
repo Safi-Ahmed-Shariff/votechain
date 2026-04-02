@@ -1,0 +1,14 @@
+apiVersion: v2
+name: votechain
+description: Post-quantum blockchain voting system for India
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - voting
+  - blockchain
+  - kubernetes
+  - devops
+maintainers:
+  - name: Safi Ahmed Shariff
+    email: safiahmedshariff@gmail.com

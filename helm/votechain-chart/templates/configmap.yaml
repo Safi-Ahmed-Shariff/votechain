@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: votechain-config
+  namespace: {{ .Values.namespace }}
+data:
+  AUTH_SERVICE_URL: "http://auth-service:{{ .Values.auth.port }}"
+  BIOMETRIC_SERVICE_URL: "http://biometric-service:{{ .Values.biometric.port }}"
+  VOTE_SERVICE_URL: "http://vote-service:{{ .Values.vote.port }}"
+  LOG_LEVEL: {{ .Values.config.logLevel }}

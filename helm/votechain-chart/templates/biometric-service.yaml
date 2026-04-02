@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: biometric-service
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: biometric
+  ports:
+    - protocol: TCP
+      port: {{ .Values.biometric.port }}
+      targetPort: {{ .Values.biometric.port }}
+  type: ClusterIP

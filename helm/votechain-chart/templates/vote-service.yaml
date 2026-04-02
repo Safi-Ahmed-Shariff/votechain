@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vote-service
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: vote
+  ports:
+    - protocol: TCP
+      port: {{ .Values.vote.port }}
+      targetPort: {{ .Values.vote.port }}
+      nodePort: {{ .Values.vote.nodePort }}
+  type: NodePort

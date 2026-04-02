@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-deployment
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: auth
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+spec:
+  replicas: {{ .Values.auth.replicas }}
+  selector:
+    matchLabels:
+      app: auth
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      containers:
+        - name: auth
+          image: {{ .Values.auth.image.repository }}:{{ .Values.auth.image.tag }}
+          imagePullPolicy: {{ .Values.auth.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.auth.port }}
+          env:
+            - name: TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: votechain-secrets
+                  key: TOKEN_SECRET
+          resources:
+            requests:
+              memory: {{ .Values.auth.resources.requests.memory }}
+              cpu: {{ .Values.auth.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.auth.resources.limits.memory }}
+              cpu: {{ .Values.auth.resources.limits.cpu }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.auth.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.auth.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10

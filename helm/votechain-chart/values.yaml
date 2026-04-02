@@ -1,0 +1,61 @@
+namespace: votechain
+
+biometric:
+  replicas: 2
+  image:
+    repository: votechain/biometric
+    tag: latest
+    pullPolicy: Never
+  port: 8001
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+
+auth:
+  replicas: 2
+  image:
+    repository: votechain/auth
+    tag: latest
+    pullPolicy: Never
+  port: 8002
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "100m"
+    limits:
+      memory: "128Mi"
+      cpu: "200m"
+
+vote:
+  replicas: 2
+  image:
+    repository: votechain/vote
+    tag: latest
+    pullPolicy: Never
+  port: 8003
+  nodePort: 30003
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "50m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 8
+  targetCPUUtilization: 50
+
+secrets:
+  biometricPepper: "votechain-dev-pepper-changeme"
+  tokenSecret: "votechain-dev-secret-changeme"
+  voteSecret: "votechain-dev-vote-secret"
+
+config:
+  logLevel: "INFO"

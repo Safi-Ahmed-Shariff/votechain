@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: biometric-deployment
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: biometric
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+spec:
+  replicas: {{ .Values.biometric.replicas }}
+  selector:
+    matchLabels:
+      app: biometric
+  template:
+    metadata:
+      labels:
+        app: biometric
+    spec:
+      containers:
+        - name: biometric
+          image: {{ .Values.biometric.image.repository }}:{{ .Values.biometric.image.tag }}
+          imagePullPolicy: {{ .Values.biometric.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.biometric.port }}
+          env:
+            - name: BIOMETRIC_PEPPER
+              valueFrom:
+                secretKeyRef:
+                  name: votechain-secrets
+                  key: BIOMETRIC_PEPPER
+          resources:
+            requests:
+              memory: {{ .Values.biometric.resources.requests.memory }}
+              cpu: {{ .Values.biometric.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.biometric.resources.limits.memory }}
+              cpu: {{ .Values.biometric.resources.limits.cpu }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.biometric.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.biometric.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
