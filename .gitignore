@@ -21,6 +21,7 @@ npm-debug.log*
 *.tfvars
 
 # Secrets — NEVER commit these
+.env
 *.pem
 *.key
 *.crt
