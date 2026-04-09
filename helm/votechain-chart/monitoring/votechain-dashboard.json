@@ -1,0 +1,119 @@
+  {
+    "title": "VoteChain Operations",
+    "uid": "votechain-ops-final",
+    "tags": ["votechain", "kubernetes", "production-ready"],
+    "timezone": "browser",
+    "editable": true,
+    "graphTooltip": 1,
+    "refresh": "10s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "templating": {
+      "list": [
+        {
+          "name": "pod",
+          "type": "query",
+          "label": "Pod",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "query": "label_values(kube_pod_info{namespace=\"votechain\"}, pod)",
+          "multi": true,
+          "includeAll": true,
+          "current": { "text": "All", "value": "$__all" },
+          "refresh": 1
+        }
+      ]
+    },
+    "panels": [
+      {
+        "id": 1,
+        "type": "stat",
+        "title": "Pods Running",
+        "gridPos": {"h": 4, "w": 8, "x": 0, "y": 0},
+        "targets": [
+          { "expr": "count(kube_pod_status_phase{namespace=\"votechain\", phase=\"Running\"})", "refId": "A" }
+        ],
+        "options": { "graphMode": "none", "textMode": "value_and_name", "colorMode": "background" },
+        "fieldConfig": { "defaults": { "unit": "none", "thresholds": { "mode": "absolute", "steps": [ {"value": null, "color": "red"}, {"value": 1, "color": "green"} ] } } }
+      },
+      {
+        "id": 2,
+        "type": "stat",
+        "title": "Avg Pod CPU",
+        "gridPos": {"h": 4, "w": 8, "x": 8, "y": 0},
+        "targets": [
+          { "expr": "avg(rate(container_cpu_usage_seconds_total{namespace=\"votechain\", container!=\"\", container!=\"POD\", pod=~\"$pod\"}[5m]))", "refId": "A" }
+        ],
+        "options": { "graphMode": "area", "textMode": "value_and_name", "colorMode": "background" },
+        "fieldConfig": { "defaults": { "unit": "short", "decimals": 3, "thresholds": { "mode": "absolute", "steps": [ {"value": null, "color": "green"}, {"value": 0.5, "color": "yellow"} ] } } }
+      },
+      {
+        "id": 3,
+        "type": "stat",
+        "title": "Avg Pod Memory",
+        "gridPos": {"h": 4, "w": 8, "x": 16, "y": 0},
+        "targets": [
+          { "expr": "avg(container_memory_usage_bytes{namespace=\"votechain\", container!=\"\", container!=\"POD\", pod=~\"$pod\"})", "refId": "A" }
+        ],
+        "options": { "graphMode": "area", "textMode": "value_and_name", "colorMode": "background" },
+        "fieldConfig": { "defaults": { "unit": "bytes", "thresholds": { "mode": "absolute", "steps": [ {"value": null, "color": "green"}, {"value": 536870912, "color": "yellow"} ] } } }
+      },
+      {
+        "id": 5,
+        "type": "timeseries",
+        "title": "CPU Usage per Pod",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "targets": [
+          { "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"votechain\", container!=\"\", container!=\"POD\", pod=~\"$pod\"}[5m])) by (pod)", "legendFormat": "{{pod}}", "refId": "A" }
+        ],
+        "options": { "tooltip": {"mode": "multi"}, "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["max"]} },
+        "fieldConfig": { "defaults": { "unit": "short", "custom": {"lineWidth": 2, "fillOpacity": 15} } }
+      },
+      {
+        "id": 6,
+        "type": "timeseries",
+        "title": "Memory Usage per Pod",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "targets": [
+          { "expr": "sum(container_memory_usage_bytes{namespace=\"votechain\", container!=\"\", container! :\"POD\", pod=~\"$pod\"}) by (pod)", "legendFormat": "{{pod}}", "refId": "A" }
+        ],
+        "options": { "tooltip": {"mode": "multi"}, "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["max"]} },
+        "fieldConfig": { "defaults": { "unit": "bytes", "custom": {"lineWidth": 2, "fillOpacity": 15} } }
+      },
+      {
+        "id": 7,
+        "type": "timeseries",
+        "title": "HPA Scaling - Vote Service",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 12},
+        "targets": [
+          { "expr": "kube_horizontalpodautoscaler_status_current_replicas{namespace=\"votechain\"}", "legendFormat": "Current Replicas", "refId": "A" },
+          { "expr": "kube_horizontalpodautoscaler_status_desired_replicas{namespace=\"votechain\"}", "legendFormat": "Desired Replicas", "refId": "B" }
+        ],
+        "options": { "legend": {"displayMode": "list", "placement": "bottom"} },
+        "fieldConfig": { "defaults": { "unit": "short", "custom": {"lineWidth": 3, "pointSize": 5, "showPoints": "always"} } }
+      },
+      {
+        "id": 10,
+        "type": "timeseries",
+        "title": "Total Cluster Network Traffic (Node Level)",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 20},
+        "targets": [
+          {
+            "expr": "sum(rate(node_network_receive_bytes_total{device=\"eth0\"}[5m]))",
+            "legendFormat": "Total Incoming (RX)",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(rate(node_network_transmit_bytes_total{device=\"eth0\"}[5m]))",
+            "legendFormat": "Total Outgoing (TX)",
+            "refId": "B"
+          }
+        ],
+        "options": { "legend": {"displayMode": "table", "placement": "right", "calcs": ["mean", "max"]} },
+        "fieldConfig": { "defaults": { "unit": "Bps", "custom": {"lineWidth": 2, "fillOpacity": 10} } }
+      }
+    ],
+    "schemaVersion": 38,
+    "version": 4
+  }
