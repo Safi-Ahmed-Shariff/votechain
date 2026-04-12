@@ -1,0 +1,78 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: votechain-alerts
+  namespace: monitoring
+  labels:
+    prometheus: kube-prometheus
+    role: alert-rules
+spec:
+  groups:
+  - name: votechain
+    interval: 30s
+    rules:
+    - alert: HighPodMemory
+      expr: |
+        container_memory_usage_bytes{namespace="votechain", container!="", container!="POD"}
+        > 400000000
+      for: 2m
+      labels:
+        severity: warning
+        namespace: votechain
+      annotations:
+        summary: "High memory usage on pod {{ $labels.pod }}"
+        description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is using {{ $value | humanize }}B of memory (threshold: 400Mi)"
+
+    - alert: PodCrashLooping
+      expr: |
+        rate(kube_pod_container_status_restarts_total{namespace="votechain"}[15m]) > 0
+      for: 5m
+      labels:
+        severity: critical
+        namespace: votechain
+      annotations:
+        summary: "Pod {{ $labels.pod }} is crash looping"
+        description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has restarted {{ $value }} times in the last 15 minutes"
+
+    - alert: PodNotReady
+      expr: |
+        kube_pod_status_phase{namespace="votechain", phase!="Running", phase!="Succeeded"} == 1
+      for: 5m
+      labels:
+        severity: warning
+        namespace: votechain
+      annotations:
+        summary: "Pod {{ $labels.pod }} is not ready"
+        description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has been in {{ $labels.phase }} state for more than 5 minutes"
+
+    - alert: HighCPUUsage
+      expr: |
+        rate(container_cpu_usage_seconds_total{namespace="votechain", container!="", container!="POD"}[5m])
+        > 0.8
+      for: 5m
+      labels:
+        severity: warning
+        namespace: votechain
+      annotations:
+        summary: "High CPU usage on pod {{ $labels.pod }}"
+        description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is using {{ $value | humanize }} CPU cores (threshold: 0.8 cores)"
+
+    - alert: HPAMaxedOut
+      expr: |
+        kube_horizontalpodautoscaler_status_current_replicas{namespace="votechain"}
+        >= kube_horizontalpodautoscaler_spec_max_replicas{namespace="votechain"}
+      for: 10m
+      labels:
+        severity: warning
+        namespace: votechain
+      annotations:
+        summary: "HPA {{ $labels.horizontalpodautoscaler }} has reached max replicas"
+        description: "HPA {{ $labels.horizontalpodautoscaler }} in namespace {{ $labels.namespace }} has been at maximum replicas ({{ $value }}) for more than 10 minutes. Consider increasing max replicas."
+
+    - alert: DeadManSwitch
+      expr: vector(1)
+      labels:
+        severity: none
+      annotations:
+        summary: "Alerting DeadManSwitch"
+        description: "This is a DeadManSwitch meant to ensure that the entire alerting pipeline is functional. If you don't receive this alert, something is broken."

@@ -1,0 +1,152 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: webhook-receiver-code
+  namespace: monitoring
+data:
+  main.go: |
+    package main
+
+    import (
+        "encoding/json"
+        "fmt"
+        "io"
+        "log"
+        "net/http"
+        "time"
+    )
+
+    type Alert struct {
+        Status       string            `json:"status"`
+        Labels       map[string]string `json:"labels"`
+        Annotations  map[string]string `json:"annotations"`
+        StartsAt     time.Time         `json:"startsAt"`
+        EndsAt       time.Time         `json:"endsAt"`
+        GeneratorURL string            `json:"generatorURL"`
+    }
+
+    type AlertmanagerWebhook struct {
+        Version           string            `json:"version"`
+        GroupKey          string            `json:"groupKey"`
+        Status            string            `json:"status"`
+        Receiver          string            `json:"receiver"`
+        GroupLabels       map[string]string `json:"groupLabels"`
+        CommonLabels      map[string]string `json:"commonLabels"`
+        CommonAnnotations map[string]string `json:"commonAnnotations"`
+        ExternalURL       string            `json:"externalURL"`
+        Alerts            []Alert           `json:"alerts"`
+    }
+
+    func handleWebhook(w http.ResponseWriter, r *http.Request) {
+        if r.Method != http.MethodPost {
+            http.Error(w, "Only POST allowed", http.StatusMethodNotAllowed)
+            return
+        }
+
+        body, err := io.ReadAll(r.Body)
+        if err != nil {
+            http.Error(w, "Error reading body", http.StatusBadRequest)
+            return
+        }
+        defer r.Body.Close()
+
+        var webhook AlertmanagerWebhook
+        if err := json.Unmarshal(body, &webhook); err != nil {
+            http.Error(w, "Error parsing JSON", http.StatusBadRequest)
+            return
+        }
+
+        log.Println("=====================================")
+        log.Printf("🚨 ALERT RECEIVED - Status: %s", webhook.Status)
+        log.Println("=====================================")
+        
+        for i, alert := range webhook.Alerts {
+            log.Printf("\n--- Alert %d/%d ---", i+1, len(webhook.Alerts))
+            log.Printf("Status: %s", alert.Status)
+            log.Printf("Alert Name: %s", alert.Labels["alertname"])
+            log.Printf("Severity: %s", alert.Labels["severity"])
+            log.Printf("Namespace: %s", alert.Labels["namespace"])
+            log.Printf("Pod: %s", alert.Labels["pod"])
+            log.Printf("Summary: %s", alert.Annotations["summary"])
+            log.Printf("Description: %s", alert.Annotations["description"])
+            log.Printf("Starts At: %s", alert.StartsAt.Format(time.RFC3339))
+            if alert.Status == "resolved" {
+                log.Printf("Resolved At: %s", alert.EndsAt.Format(time.RFC3339))
+            }
+        }
+        
+        log.Println("=====================================\n")
+
+        w.WriteHeader(http.StatusOK)
+        fmt.Fprintf(w, "Received %d alerts\n", len(webhook.Alerts))
+    }
+
+    func main() {
+        http.HandleFunc("/webhook", handleWebhook)
+        http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+            w.WriteHeader(http.StatusOK)
+            fmt.Fprint(w, "OK")
+        })
+
+        log.Println("🎯 Webhook receiver starting on :8080")
+        log.Println("📬 Listening for alerts on /webhook")
+        if err := http.ListenAndServe(":8080", nil); err != nil {
+            log.Fatal(err)
+        }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webhook-receiver
+  namespace: monitoring
+  labels:
+    app: webhook-receiver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webhook-receiver
+  template:
+    metadata:
+      labels:
+        app: webhook-receiver
+    spec:
+      containers:
+      - name: webhook-receiver
+        image: golang:1.24-alpine
+        workingDir: /app
+        command: ["go", "run", "main.go"]
+        ports:
+        - containerPort: 8080
+          name: http
+        volumeMounts:
+        - name: code
+          mountPath: /app
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "512Mi"
+            cpu: "300m"
+      volumes:
+      - name: code
+        configMap:
+          name: webhook-receiver-code
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webhook-receiver
+  namespace: monitoring
+  labels:
+    app: webhook-receiver
+spec:
+  selector:
+    app: webhook-receiver
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+  type: ClusterIP
