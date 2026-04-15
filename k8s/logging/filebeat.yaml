@@ -19,6 +19,11 @@ data:
           fields: ["message"]
           target: "json"
           overwrite_keys: true
+    - type: container
+      paths:
+        - /var/log/containers/*tetragon*.log
+      fields:
+        log_type: security_event
 
     output.elasticsearch:
       hosts: ['${ELASTICSEARCH_HOST:elasticsearch}:${ELASTICSEARCH_PORT:9200}']
@@ -87,6 +92,9 @@ spec:
         - name: varlog
           mountPath: /var/log
           readOnly: true
+        - name: tetragon-logs
+          mountPath: /var/run/tetragon
+          readOnly: true
       volumes:
       - name: config
         configMap:
@@ -101,6 +109,10 @@ spec:
       - name: data
         hostPath:
           path: /var/lib/filebeat-data
+          type: DirectoryOrCreate
+      - name: tetragon-logs
+        hostPath:
+          path: /var/run/tetragon
           type: DirectoryOrCreate
 ---
 apiVersion: v1

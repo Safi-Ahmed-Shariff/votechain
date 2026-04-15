@@ -1,0 +1,63 @@
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicyNamespaced
+metadata:
+  name: votechain-security-policy
+  namespace: votechain
+spec:
+  kprobes:
+  # --- BLOCK 1: Binaries (Shells, PKG Managers, Net Tools) ---
+  - call: "sys_execve"
+    syscall: true
+    args:
+    - index: 0
+      type: "string"
+    selectors:
+    - matchArgs:
+      - index: 0
+        operator: "Equal"
+        values:
+        - "/bin/sh"
+        - "/bin/bash"
+        - "/usr/bin/apt"
+        - "/usr/bin/npm"
+        - "/usr/bin/curl"
+        - "/usr/bin/wget"
+      matchActions:
+      - action: Post
+
+  # --- BLOCK 2: Sensitive Reads ---
+  - call: "sys_openat"
+    syscall: true
+    args:
+    - index: 1
+      type: "string"
+    selectors:
+    - matchArgs:
+      - index: 1
+        operator: "Equal"
+        values:
+        - "/etc/shadow"
+        - "/etc/passwd"
+      matchActions:
+      - action: Post
+
+  # --- BLOCK 3: Container Drift (File Writes to System Dirs) ---
+  - call: "fd_install"
+    syscall: false
+    args:
+    - index: 1
+      type: "file"
+    selectors:
+    - matchArgs:
+      - index: 1
+        operator: "Prefix"
+        values:
+        - "/etc/"
+        - "/usr/bin/"
+        - "/var/spool/cron"
+      matchActions:
+      - action: Post
+
+
+
+
