@@ -48,7 +48,7 @@ HashiCorp Vault · Falco · Grype · OWASP ZAP
 
 ## Quick Start
 ```bash
-git clone git@github.com:YOUR_USERNAME/votechain.git
+git clone https://github.com/Safi-Ahmed-Shariff/votechain.git
 cd votechain
 docker compose up --build
 ```
