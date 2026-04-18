@@ -1,0 +1,25 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: allow-only-trusted-images
+
+spec:
+  validationFailureAction: Enforce
+  background: false
+
+  rules:
+    - name: restrict-image-registries
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - votechain
+
+      validate:
+        message: "Only approved VoteChain images from ghcr.io/safi-ahmed-shariff are allowed."
+        pattern:
+          spec:
+            containers:
+              - image: "ghcr.io/safi-ahmed-shariff/*"

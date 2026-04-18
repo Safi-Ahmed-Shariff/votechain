@@ -36,3 +36,4 @@ Thumbs.db
 kubectl
 minikube-linux-amd64
 *.exe
+keys/cosign.key

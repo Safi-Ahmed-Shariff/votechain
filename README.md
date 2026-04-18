@@ -1,62 +1,64 @@
-# ⛓ VoteChain
+⛓ VoteChain (DevOps Infrastructure Edition)
+A secure, observable, and automated microservices ecosystem for digital voting, hardened with Zero-Trust architecture and eBPF runtime security.
 
-> India's first biometric-authenticated, post-quantum encrypted,
-> zero-knowledge blockchain voting system.
+The Problem
+India's voting system requires absolute cryptographic certainty. Traditional systems are vulnerable to unauthorized access and lack kernel-level visibility into the infrastructure running the election.
 
-## The Problem
-India's voting system has no cryptographic privacy guarantee.
-Booth capturing, ghost voting, and EVM tampering are real threats
-affecting 900 million voters.
+The Solution
+VoteChain Infrastructure uses a multi-layered DevOps and Security stack to ensure that only verified, signed, and monitored code can ever execute within the cluster.
 
-## The Solution
-VoteChain uses 8 security layers to make electoral fraud
-mathematically impossible — not just difficult.
+Architecture
+Voter Traffic → Ingress → Kyverno Admission Controller → Verified Pods
+                             ↓ (Signature & Registry Check)
+                       Tetragon (eBPF) ← (Kernel Process Monitoring)
+                             ↓
+                   Prometheus & Grafana (Metrics & Observability)
 
-## Architecture
-```
-Voter → Biometric Gate → ZK Proof Engine → Encrypted Vote → Blockchain
-           ↓                    ↓                  ↓
-      SHA3-512 Hash      Groth16 SNARK      Kyber-1024 PQC
-      (identity never    (vote valid,       (quantum-proof
-       stored raw)        who? unknown)      encryption)
-```
+Microservices & Infrastructure Components
+Component	      Technology	Role
+Admission Control	Kyverno	        Image whitelisting & Signature verification
+Runtime Security	Tetragon	eBPF-based kernel event monitoring
+Provisioning	        Terraform	Infrastructure as Code for Cloud resources
+Cloud Simulation	LocalStack	AWS S3/IAM/SQS simulation for local dev
+Monitoring	        Prometheus	Metric collection and alerting
+Visualization	        Grafana	        Security & Performance dashboards
+Secrets	                HashiCorp Vault	Secure storage for PQC & Biometric keys
 
-## Microservices
-| Service | Language | Port | Role |
-|---|---|---|---|
-| biometric-service | Python/FastAPI | 8001 | Fingerprint+iris hashing |
-| auth-service | Go | 8002 | Eligibility + ZK proof |
-| vote-service | Node.js | 8003 | Encrypted vote submission |
-| tally-service | Python | 8004 | Homomorphic count |
-| anomaly-detector | Python | 8005 | Claude API threat detection |
-| frontend | React | 3000 | Voter + officer UI |
+DevOps Stack
+Docker · Kubernetes (Minikube) · Helm · Terraform · Jenkins · GitHub Actions · Prometheus · Grafana · ELK Stack · HashiCorp Vault · Tetragon · Grype · LocalStack · Sigstore Cosign
 
-## DevOps Stack
-Docker · Kubernetes (Minikube/EKS) · Terraform · Jenkins ·
-GitHub Actions · Prometheus · Grafana · ELK Stack ·
-HashiCorp Vault · Falco · Grype · OWASP ZAP
+Security Layers (Implemented)
+🛑 Registry Lockdown: Kyverno ClusterPolicies enforce ghcr.io as the only trusted image source.
 
-## Security Layers
-1. 🔍 Dual biometric gate (fingerprint + iris, liveness detection)
-2. ⬡  Post-quantum encryption (CRYSTALS-Kyber-1024)
-3. ◎  Zero-Knowledge Proofs (Groth16 zk-SNARK)
-4. ∑  Homomorphic tally (counted while encrypted)
-5. ⛓  28-node Hyperledger Fabric (one per Indian state)
-6. ▣  HSM key storage (FIPS 140-3 Level 4)
-7. ◉  AI anomaly detection (Claude API)
-8. ◷  Citizen-verifiable audit trail
+🖋 Image Integrity: Cryptographic signing with Cosign to prevent supply-chain attacks.
 
-## Quick Start
-```bash
+🔍 Kernel Observability: eBPF monitoring via Tetragon to detect unauthorized shell access.
+
+🛡 Automated Scanning: Image vulnerability assessment using Grype before cluster admission.
+
+▣ Isolated Secrets: Sensitive voting credentials managed via HashiCorp Vault integration.
+
+📈 Proactive Monitoring: Real-time Grafana alerts for resource spikes or security denials.
+
+🏗 Simulated Cloud: LocalStack integration for testing AWS-dependent services locally.
+
+⚡ Resource Optimization: High-availability tuning (1Gi RAM/250m CPU) for stable security webhooks.
+
+Quick Start
+Bash
+# Clone the security-hardened repository
 git clone https://github.com/Safi-Ahmed-Shariff/votechain.git
-cd votechain
-docker compose up --build
-```
+cd votechain/k8s/kyverno
 
-## Build Log
-🔨 Building in public — Day 1/30
+# Apply the trusted perimeter
+kubectl apply -f trusted-registry-policy.yaml
+
+# Test the 'Bouncer' (This will be REJECTED)
+kubectl run intruder --image=nginx -n votechain
+Build Log
+🚀 Project Phase 1: Infrastructure Hardening — Complete.
 Follow progress: [https://www.linkedin.com/in/safi-ahmed-shariff-b03499264]
 
-## Author
+Author
 Safi | DevOps & Cloud Engineer
 AWS Certified Cloud Practitioner

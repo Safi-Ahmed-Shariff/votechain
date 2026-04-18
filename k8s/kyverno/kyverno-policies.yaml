@@ -1,0 +1,39 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-votechain-images
+spec:
+  validationFailureAction: Enforce
+  background: false
+  webhookTimeoutSeconds: 30
+
+  rules:
+    - name: verify-signed-images
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - votechain
+
+      verifyImages:
+        - imageReferences:
+            - "ghcr.io/safi-ahmed-shariff/vote-service:*"
+            - "ghcr.io/safi-ahmed-shariff/auth-service:*"
+            - "ghcr.io/safi-ahmed-shariff/biometric-service:*"
+            - "nginx:*"
+
+          required: true
+          mutateDigest: false
+          verifyDigest: false
+
+          attestors:
+            - count: 1
+              entries:
+                - keys:
+                    publicKeys: |-
+                      -----BEGIN PUBLIC KEY-----
+                      MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE4yv/XBgduJhwsAM1rACSrUd3IE4L
+                      bvwZBNuZPbi05dXwChYP9zXfD8FGCZj+uWtnUeror0nZLb76Wp0CFK0/4g==
+                      -----END PUBLIC KEY-----
