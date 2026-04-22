@@ -16,19 +16,25 @@ spec:
       labels:
         app: auth
         tier: backend
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "auth-role"
+        vault.hashicorp.com/agent-inject-secret-config: "secret/data/auth"
+        vault.hashicorp.com/agent-inject-template-config: |
+          {{- with secret "secret/data/auth" -}}
+          export TOKEN_SECRET="{{ .Data.data.TOKEN_SECRET }}"
+          {{- end }}
     spec:
+      serviceAccountName: auth-sa
       containers:
         - name: auth
           image: votechain/auth:latest
           imagePullPolicy: Never
+          command: ["/bin/sh","-c"]
+          args:
+            - . /vault/secrets/config && exec ./auth-service
           ports:
             - containerPort: 8002
-          env:
-            - name: TOKEN_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: votechain-secrets
-                  key: TOKEN_SECRET
           resources:
             requests:
               memory: "64Mi"

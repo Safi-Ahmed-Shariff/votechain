@@ -16,11 +16,24 @@ spec:
       labels:
         app: vote
         tier: backend
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "vote-role"
+        vault.hashicorp.com/agent-inject-secret-config: "secret/data/vote"
+        vault.hashicorp.com/agent-inject-template-config: |
+          {{- with secret "secret/data/vote" -}}
+          export VOTE_SECRET="{{ .Data.data.JWT_SECRET }}"
+          export API_KEY="{{ .Data.data.API_KEY }}"
+          {{- end }}
     spec:
+      serviceAccountName: vote-sa
       containers:
         - name: vote
           image: votechain/vote:latest
           imagePullPolicy: Never
+          command: ["/bin/sh","-c"]
+          args:
+            - source /vault/secrets/config && node index.js
           ports:
             - containerPort: 8003
           env:
@@ -29,11 +42,6 @@ spec:
                 configMapKeyRef:
                   name: votechain-config
                   key: AUTH_SERVICE_URL
-            - name: VOTE_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: votechain-secrets
-                  key: VOTE_SECRET
           resources:
             requests:
               memory: "128Mi"

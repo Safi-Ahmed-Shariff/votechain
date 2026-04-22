@@ -16,19 +16,25 @@ spec:
       labels:
         app: biometric
         tier: backend
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "biometric-role"
+        vault.hashicorp.com/agent-inject-secret-config: "secret/data/biometric"
+        vault.hashicorp.com/agent-inject-template-config: |
+          {{- with secret "secret/data/biometric" -}}
+          export BIOMETRIC_PEPPER="{{ .Data.data.BIOMETRIC_PEPPER }}"
+          {{- end }}
     spec:
+      serviceAccountName: biometric-sa
       containers:
         - name: biometric
           image: votechain/biometric:latest
           imagePullPolicy: Never
+          command: ["/bin/sh","-c"]
+          args:
+            - . /vault/secrets/config && exec uvicorn main:app --host 0.0.0.0 --port 8001
           ports:
             - containerPort: 8001
-          env:
-            - name: BIOMETRIC_PEPPER
-              valueFrom:
-                secretKeyRef:
-                  name: votechain-secrets
-                  key: BIOMETRIC_PEPPER
           resources:
             requests:
               memory: "128Mi"
