@@ -6,7 +6,6 @@ spec:
   validationFailureAction: Enforce
   background: false
   webhookTimeoutSeconds: 30
-
   rules:
     - name: verify-signed-images
       match:
@@ -14,20 +13,19 @@ spec:
           - resources:
               kinds:
                 - Pod
+                - Deployment
+                - StatefulSet
+                - DaemonSet
+                - Job
+                - CronJob
               namespaces:
                 - votechain
-
       verifyImages:
         - imageReferences:
-            - "ghcr.io/safi-ahmed-shariff/vote-service:*"
-            - "ghcr.io/safi-ahmed-shariff/auth-service:*"
-            - "ghcr.io/safi-ahmed-shariff/biometric-service:*"
-            - "nginx:*"
-
+            - "ghcr.io/safi-ahmed-shariff/*"
           required: true
-          mutateDigest: false
-          verifyDigest: false
-
+          mutateDigest: true
+          verifyDigest: true
           attestors:
             - count: 1
               entries:
